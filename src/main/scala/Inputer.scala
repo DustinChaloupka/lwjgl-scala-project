@@ -1,5 +1,5 @@
 package games.fantasy.lwjgl
 
-trait Inputer {
+object Inputer {
   def input(): Unit = {}
 }

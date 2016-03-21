@@ -2,44 +2,31 @@ package games.fantasy.lwjgl
 import org.lwjgl.glfw.GLFW._
 import GameAttributes.targetUPS
 
-trait GameLoop extends Timer with Updater with Inputer with Renderer {
-  def playGame(window: Long): Unit = {
-    runLoop(window, Times(getTime, 0), FrameRates(0, 0, 0, 0))
+trait GameLoop {
+  def playGame(window: Long, timer: Timer, renderer: Renderer): Unit = {
+    runLoop(window, timer, renderer, FrameRates(0, 0, 0, 0))
   }
 
   @annotation.tailrec
-  final def runLoop(window: Long, times: Times, frameRates: FrameRates, fixedTimeStep: FixedTimeStep = FixedTimeStep(), interval: Double = 1.0 / targetUPS): Unit = {
+  final def runLoop(window: Long, timer: Timer, renderer: Renderer, frameRates: FrameRates, fixedTimeStep: FixedTimeStep = FixedTimeStep(), interval: Float = 1f / targetUPS): Unit = {
     // Where does this go exactly?
-    val (delta, updatedTimes) = getDeltaAndUpdatedTimes(times)
+    val (delta, updatedTimer) = Timer.getDeltaAndUpdatedTimer(timer)
     val updatedFixedTimeStep = fixedTimeStep.addDeltaToAccumulator(delta)
 
     // Goes in input?
     glfwSwapBuffers(window)
     glfwPollEvents()
 
-    input()
+    Inputer.input()
 
-    val (fullyUpdatedFixedTimeStep, updatedUpdateFrameRates) = tryUpdating(updatedFixedTimeStep, frameRates, interval)
+    val (fullyUpdatedFixedTimeStep, updatedUpdateFrameRates, updatedUpdateRenderer) = Updater.tryUpdating(updatedFixedTimeStep, frameRates, renderer, interval, delta)
 
-    val updatedRenderFrameRates = render(updatedUpdateFrameRates, fullyUpdatedFixedTimeStep)
+    val updatedRenderFrameRates = Renderer.render(updatedUpdateFrameRates, fullyUpdatedFixedTimeStep, renderer)
 
-    // Maybe do this here?
-    val (fullyUpdatedFrameRates, fullyUpdatedTimes) = updateFrameRatesAndTimes(updatedRenderFrameRates, updatedTimes)
+    val (fullyUpdatedFrameRates, fullyUpdatedTimer) = Timer.updateFrameRatesAndTimer(updatedRenderFrameRates, updatedTimer)
 
     if (glfwWindowShouldClose(window) != GLFW_TRUE) {
-      runLoop(window, fullyUpdatedTimes, fullyUpdatedFrameRates, fullyUpdatedFixedTimeStep)
-    }
-  }
-
-  @annotation.tailrec
-  final def tryUpdating(fixedTimeStep: FixedTimeStep, frameRates: FrameRates, interval: Double): (FixedTimeStep, FrameRates) = {
-    if (fixedTimeStep.accumulator >= interval) {
-      val updatedUpdateFrameRates = update(frameRates)
-      val updatedFixedTimeStep = fixedTimeStep.subtractIntervalFromAccumulator(interval)
-      tryUpdating(updatedFixedTimeStep, updatedUpdateFrameRates, interval)
-    } else {
-      val updatedFixedTimeStep = fixedTimeStep.updateAlpha(interval)
-      (updatedFixedTimeStep, frameRates)
+      runLoop(window, fullyUpdatedTimer, updatedUpdateRenderer, fullyUpdatedFrameRates, fullyUpdatedFixedTimeStep)
     }
   }
 }
