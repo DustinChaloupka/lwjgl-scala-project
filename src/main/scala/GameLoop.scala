@@ -4,7 +4,7 @@ import GameAttributes.targetUPS
 
 trait GameLoop {
   @annotation.tailrec
-  final def runLoop(window: Window, timer: Timer, renderer: Renderer, frameRates: FrameRates, fixedTimeStep: FixedTimeStep = FixedTimeStep(), interval: Float = 1f / targetUPS): Unit = {
+  final def runLoop(window: Window, timer: Timer, renderer: Renderer, frameRates: FrameRates, fixedTimeStep: FixedTimeStep = FixedTimeStep()): Unit = {
     // Where does this go exactly?
     val (delta, updatedTimer) = Timer.getDeltaAndUpdatedTimer(timer)
     val updatedFixedTimeStep = fixedTimeStep.addDeltaToAccumulator(delta)
@@ -15,7 +15,7 @@ trait GameLoop {
 
     Inputer.input()
 
-    val (fullyUpdatedFixedTimeStep, updatedUpdateFrameRates, updatedUpdateRenderer) = Updater.tryUpdating(updatedFixedTimeStep, frameRates, renderer, interval, delta)
+    val (fullyUpdatedFixedTimeStep, updatedUpdateFrameRates, updatedUpdateRenderer) = Updater.tryUpdating(updatedFixedTimeStep, frameRates, renderer, delta)
 
     val updatedRenderFrameRates = Renderer.render(updatedUpdateFrameRates, fullyUpdatedFixedTimeStep, renderer)
 
