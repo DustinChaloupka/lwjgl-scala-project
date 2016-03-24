@@ -1,7 +1,13 @@
 package org.chaloupka.lwjgl
 
-case class FrameRates(fps: Int, fpsCount: Int, ups: Int, upsCount: Int) {
-  def incrementFPSCount(): FrameRates = this.copy(fps, fpsCount + 1, ups, upsCount)
-  def incrementUPSCount(): FrameRates = this.copy(fps, fpsCount, ups, upsCount + 1)
-  def resetPerSecondCounts(): FrameRates = this.copy(fpsCount, 0, upsCount, 0)
+case class FrameRates(currentFPS: Int, fpsCount: Int, currentUPS: Int, upsCount: Int) {
+  def incrementFPSCount(): FrameRates = this.copy(fpsCount = fpsCount + 1)
+  def incrementUPSCount(): FrameRates = this.copy(upsCount = upsCount + 1)
+  def maybeResetPerSecondCounts(shouldReset: Boolean): FrameRates = {
+    if (shouldReset) {
+      this.copy(fpsCount, 0, upsCount, 0)
+    } else {
+      this
+    }
+  }
 }

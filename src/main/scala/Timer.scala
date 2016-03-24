@@ -1,38 +1,14 @@
 package org.chaloupka.lwjgl
 import org.lwjgl.glfw.GLFW.glfwGetTime
 
-case class Timer(lastLoopTime: Float, timeCount: Float) {
-  lazy val interval = 1f / GameAttributes.targetUPS
-  def decrementTimeCount(): Timer = this.copy(lastLoopTime, timeCount - 1)
-  def addDeltaToTimeCount(delta: Float): Timer = this.copy(lastLoopTime, timeCount + delta)
-  def withUpdatedLastLoopTime(time: Float): Timer = this.copy(time, timeCount)
-}
+case class Timer(lastLoopTime: Float = glfwGetTime().toFloat, timeCount: Float = 0f, delta: Float = 0f) {
+  def update(oneSecondHasPassed: Boolean): Timer = {
+    val currentTime = glfwGetTime().toFloat
+    val updatedDelta = currentTime - lastLoopTime
 
-object Timer {
-  def initializeTimer(): Timer = {
-    Timer(getTime, 0)
-  }
+    val timeCountDecrementer = if (oneSecondHasPassed) 1 else 0
+    val updatedTimeCount = timeCount + delta - timeCountDecrementer
 
-  def getTime: Float = {
-    glfwGetTime().toFloat
-  }
-
-  def getDeltaAndUpdatedTimer(timer: Timer): (Float, Timer) = {
-    val currentTime = getTime
-    val delta = currentTime - timer.lastLoopTime
-
-    val updatedTimeCount = timer.addDeltaToTimeCount(delta)
-
-    (delta, updatedTimeCount.withUpdatedLastLoopTime(currentTime))
-  }
-
-  def updateFrameRatesAndTimer(frameRates: FrameRates, timer: Timer): (FrameRates, Timer) = {
-    if (timer.timeCount > 1f) {
-      val updatedFrameRates = frameRates.resetPerSecondCounts()
-      val updatedTimer = timer.decrementTimeCount()
-      (updatedFrameRates, updatedTimer)
-    } else {
-      (frameRates, timer)
-    }
+    Timer(currentTime, updatedTimeCount, updatedDelta)
   }
 }

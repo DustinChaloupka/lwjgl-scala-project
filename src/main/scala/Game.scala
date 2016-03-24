@@ -21,7 +21,7 @@ object Game extends GameLoop {
     window.createCapabilities()
     window.setKeyCallback(keyCallback)
 
-    val timer = Timer.initializeTimer()
+    val timer = Timer()
 
     val renderer = Renderer.initializeRenderer()
 
@@ -34,8 +34,7 @@ object Game extends GameLoop {
     renderer.dispose()
     window.dispose()
     keyCallback.release()
-
-    glfwTerminate()
     errorCallback.release()
+    glfwTerminate()
   }
 }
