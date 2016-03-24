@@ -1,4 +1,4 @@
-package games.fantasy.lwjgl
+package org.chaloupka.lwjgl
 
 import org.lwjgl.glfw.GLFW._
 import org.lwjgl.glfw.{GLFWKeyCallback, GLFWErrorCallback}

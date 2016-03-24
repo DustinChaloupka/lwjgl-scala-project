@@ -1,4 +1,4 @@
-package games.fantasy.lwjgl
+package org.chaloupka.lwjgl
 import java.nio.FloatBuffer
 import org.lwjgl.opengl.GL15._
 import org.lwjgl.opengl.GL11._

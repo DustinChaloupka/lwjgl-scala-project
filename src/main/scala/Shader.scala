@@ -1,4 +1,4 @@
-package games.fantasy.lwjgl
+package org.chaloupka.lwjgl
 import java.io.{FileInputStream, BufferedReader, InputStreamReader, IOException}
 import org.lwjgl.opengl.GL20._
 import org.lwjgl.opengl.GL11.GL_TRUE

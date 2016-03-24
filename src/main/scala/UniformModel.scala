@@ -1,4 +1,4 @@
-package games.fantasy.lwjgl
+package org.chaloupka.lwjgl
 
 sealed trait UniformModel {
   def id: Int

@@ -1,20 +1,16 @@
-package games.fantasy.lwjgl
+package org.chaloupka.lwjgl
 import org.lwjgl.glfw.GLFW._
 import GameAttributes.targetUPS
 
 trait GameLoop {
-  def playGame(window: Long, timer: Timer, renderer: Renderer): Unit = {
-    runLoop(window, timer, renderer, FrameRates(0, 0, 0, 0))
-  }
-
   @annotation.tailrec
-  final def runLoop(window: Long, timer: Timer, renderer: Renderer, frameRates: FrameRates, fixedTimeStep: FixedTimeStep = FixedTimeStep(), interval: Float = 1f / targetUPS): Unit = {
+  final def runLoop(window: Window, timer: Timer, renderer: Renderer, frameRates: FrameRates, fixedTimeStep: FixedTimeStep = FixedTimeStep(), interval: Float = 1f / targetUPS): Unit = {
     // Where does this go exactly?
     val (delta, updatedTimer) = Timer.getDeltaAndUpdatedTimer(timer)
     val updatedFixedTimeStep = fixedTimeStep.addDeltaToAccumulator(delta)
 
     // Goes in input?
-    glfwSwapBuffers(window)
+    glfwSwapBuffers(window.id)
     glfwPollEvents()
 
     Inputer.input()
@@ -25,7 +21,7 @@ trait GameLoop {
 
     val (fullyUpdatedFrameRates, fullyUpdatedTimer) = Timer.updateFrameRatesAndTimer(updatedRenderFrameRates, updatedTimer)
 
-    if (glfwWindowShouldClose(window) != GLFW_TRUE) {
+    if (glfwWindowShouldClose(window.id) != GLFW_TRUE) {
       runLoop(window, fullyUpdatedTimer, updatedUpdateRenderer, fullyUpdatedFrameRates, fullyUpdatedFixedTimeStep)
     }
   }

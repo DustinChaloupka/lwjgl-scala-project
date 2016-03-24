@@ -1,4 +1,4 @@
-package games.fantasy.lwjgl
+package org.chaloupka.lwjgl
 
 import org.lwjgl.opengl.GL30._
 

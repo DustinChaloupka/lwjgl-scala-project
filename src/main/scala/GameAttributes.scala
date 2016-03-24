@@ -1,4 +1,4 @@
-package games.fantasy.lwjgl
+package org.chaloupka.lwjgl
 
 object GameAttributes {
   lazy val targetUPS = 30

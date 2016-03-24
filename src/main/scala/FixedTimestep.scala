@@ -1,4 +1,4 @@
-package games.fantasy.lwjgl
+package org.chaloupka.lwjgl
 
 case class FixedTimeStep(accumulator: Float = 0f, alpha: Float = 0f) {
   def addDeltaToAccumulator(delta: Float): FixedTimeStep = this.copy(accumulator + delta, alpha)

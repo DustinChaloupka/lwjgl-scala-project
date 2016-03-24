@@ -1,4 +1,4 @@
-package games.fantasy.lwjgl
+package org.chaloupka.lwjgl
 import org.lwjgl.glfw.GLFW.glfwGetTime
 
 case class Timer(lastLoopTime: Float, timeCount: Float) {
