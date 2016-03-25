@@ -35,7 +35,8 @@ case class ShaderProgram(id: Int = glCreateProgram()) {
     glUseProgram(id)
   }
 
-  def delete(): Unit = {
+  def delete(shaders: Shader*): Unit = {
+    shaders.foreach(shader => glDetachShader(id, shader.id))
     glDeleteProgram(id)
   }
 }

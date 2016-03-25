@@ -9,7 +9,7 @@ case class Renderer(shaderProgram: ShaderProgram,
                     vertexShader: Shader,
                     fragmentShader: Shader,
                     vertexArrayObject: VertexArrayObject,
-                    vertexArrayBuffer: VertexArrayBuffer,
+                    vertexBufferObject: VertexBufferObject,
                     vertices: FloatBuffer,
                     uniformModel: UniformModel) {
   def dispose(): Unit = {
@@ -17,7 +17,7 @@ case class Renderer(shaderProgram: ShaderProgram,
     vertexShader.delete()
     fragmentShader.delete()
     vertexArrayObject.delete()
-    vertexArrayBuffer.delete()
+    vertexBufferObject.delete()
   }
 
   def updateUniformModel(uniformModel: UniformModel): Renderer = {
@@ -30,16 +30,16 @@ object Renderer {
     val vertexArrayObject = new VertexArrayObject()
     vertexArrayObject.bind()
 
-    val vertexArrayBuffer = new VertexArrayBuffer()
-    vertexArrayBuffer.bind(GL_ARRAY_BUFFER)
+    val vertexBufferObject = new VertexBufferObject()
+    vertexBufferObject.bind(GL_ARRAY_BUFFER)
 
     val vertices = BufferUtils.createFloatBuffer(3 * 6)
-    vertices.put(-0.6f).put(-0.4f).put(0f).put(1f).put(0f).put(0f)
-    vertices.put(0.6f).put(-0.4f).put(0f).put(0f).put(1f).put(0f)
-    vertices.put(0f).put(0.6f).put(0f).put(0f).put(0f).put(1f)
+    vertices.put(0f).put(0.5f).put(0f).put(0f).put(0f).put(0f)
+    vertices.put(0.5f).put(0f).put(0f).put(0f).put(0.2f).put(0f)
+    vertices.put(0f).put(-0.5f).put(0f).put(0f).put(0f).put(0f)
     vertices.flip()
 
-    vertexArrayBuffer.uploadData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW)
+    vertexBufferObject.uploadData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW)
 
     val vertexShader = Shader.loadShaderFromFile(GL_VERTEX_SHADER, "src/main/resources/default.vert")
     vertexShader.init()
@@ -69,7 +69,7 @@ object Renderer {
     val projection = Matrix4.orthographic(-ratio, ratio, -1f, 1f, -1f, 1f)
     shaderProgram.setUniformMatrix4(uniformProjectionLocation, projection)
 
-    Renderer(shaderProgram, vertexShader, fragmentShader, vertexArrayObject, vertexArrayBuffer, vertices, triangleUniformModel)
+    Renderer(shaderProgram, vertexShader, fragmentShader, vertexArrayObject, vertexBufferObject, vertices, triangleUniformModel)
   }
 
   def render(frameRates: FrameRates, fixedTimeStep: FixedTimeStep, renderer: Renderer): FrameRates = {
@@ -96,8 +96,8 @@ object Renderer {
     glEnableVertexAttribArray(positionAttribute)
     glVertexAttribPointer(positionAttribute, 3, GL_FLOAT, false, 6 * floatSize, 0)
 
-    val columnAttribute = shaderProgram.getAttributeLocation("color")
-    glEnableVertexAttribArray(columnAttribute)
-    glVertexAttribPointer(columnAttribute, 3, GL_FLOAT, false, 6 * floatSize, 3 * floatSize)
+    val colorAttribute = shaderProgram.getAttributeLocation("color")
+    glEnableVertexAttribArray(colorAttribute)
+    glVertexAttribPointer(colorAttribute, 3, GL_FLOAT, false, 6 * floatSize, 3 * floatSize)
   }
 }
