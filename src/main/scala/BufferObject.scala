@@ -7,19 +7,21 @@ trait BufferObject {
 
   lazy val id = glGenBuffers()
 
-  def bind(): Unit = {
-    glBindBuffer(bufferType, id)
-  }
-
   def uploadData(data: FloatBuffer, usage: Int): Unit = {
+    bind()
     glBufferData(bufferType, data, usage)
   }
 
   def uploadData(data: IntBuffer, usage: Int): Unit = {
+    bind()
     glBufferData(bufferType, data, usage)
   }
 
   def delete(): Unit = {
     glDeleteBuffers(id)
+  }
+
+  private[this] def bind(): Unit = {
+    glBindBuffer(bufferType, id)
   }
 }

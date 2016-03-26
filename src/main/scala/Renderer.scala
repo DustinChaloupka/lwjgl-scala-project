@@ -1,4 +1,5 @@
 package org.chaloupka.lwjgl
+import org.chaloupka.lwjgl.PrimitiveUtils.FloatSize
 import java.nio.Buffer
 import org.lwjgl.opengl.GL15._
 import org.lwjgl.opengl.GL11._
@@ -6,16 +7,12 @@ import org.lwjgl.opengl.GL20._
 import org.lwjgl.BufferUtils
 
 case class Renderer(shaderProgram: ShaderProgram,
-                    vertexShader: Shader,
-                    fragmentShader: Shader,
                     vertexArrayObject: VertexArrayObject,
                     bufferObjects: List[BufferObject],
                     vertices: List[Buffer],
                     uniformModel: UniformModel) {
   def dispose(): Unit = {
-    shaderProgram.delete(vertexShader, fragmentShader)
-    vertexShader.delete()
-    fragmentShader.delete()
+    shaderProgram.delete()
     vertexArrayObject.delete()
     bufferObjects.foreach(_.delete())
   }
@@ -31,24 +28,20 @@ object Renderer {
     vertexArrayObject.bind()
 
     val vertexBufferObject = new VertexBufferObject()
-    vertexBufferObject.bind()
-
-    val modelVertices = BufferUtils.createFloatBuffer(8 * 6)
-    modelVertices.put(-0.5f).put(0.5f).put(0f).put(1f).put(0f).put(0f)
-    modelVertices.put(0.5f).put(0.5f).put(0f).put(0f).put(1f).put(0f)
-    modelVertices.put(0.5f).put(-0.5f).put(0f).put(0f).put(0f).put(1f)
-    modelVertices.put(-0.5f).put(-0.5f).put(0f).put(0.5f).put(0.5f).put(0f)
-    modelVertices.put(-0.5f).put(0.5f).put(-0.5f).put(0f).put(0.5f).put(0.5f)
-    modelVertices.put(0.5f).put(0.5f).put(-0.5f).put(0.25f).put(0.25f).put(0.25f)
-    modelVertices.put(0.5f).put(-0.5f).put(-0.5f).put(0.5f).put(0f).put(0.5f)
-    modelVertices.put(-0.5f).put(-0.5f).put(-0.5f).put(0.75f).put(0.75f).put(0.75f)
+    val modelVertices = BufferUtils.createFloatBuffer(8 * 7)
+    modelVertices.put(-0.5f).put(0.5f).put(0f).put(1f).put(0f).put(0f).put(1f)
+    modelVertices.put(0.5f).put(0.5f).put(0f).put(0f).put(1f).put(0f).put(1f)
+    modelVertices.put(0.5f).put(-0.5f).put(0f).put(0f).put(0f).put(1f).put(1f)
+    modelVertices.put(-0.5f).put(-0.5f).put(0f).put(0.5f).put(0.5f).put(0f).put(1f)
+    modelVertices.put(-0.5f).put(0.5f).put(-0.5f).put(0f).put(0.5f).put(0.5f).put(1f)
+    modelVertices.put(0.5f).put(0.5f).put(-0.5f).put(0.25f).put(0.25f).put(0.25f).put(1f)
+    modelVertices.put(0.5f).put(-0.5f).put(-0.5f).put(0.5f).put(0f).put(0.5f).put(1f)
+    modelVertices.put(-0.5f).put(-0.5f).put(-0.5f).put(0.75f).put(0.75f).put(0.75f).put(1f)
     modelVertices.flip()
 
     vertexBufferObject.uploadData(modelVertices, GL_STATIC_DRAW)
 
     val elementBufferObject = new ElementBufferObject()
-    elementBufferObject.bind()
-
     val elementVertices = BufferUtils.createIntBuffer(12 * 3)
     elementVertices.put(0).put(1).put(2)
     elementVertices.put(2).put(3).put(0)
@@ -67,13 +60,19 @@ object Renderer {
     elementBufferObject.uploadData(elementVertices, GL_STATIC_DRAW)
 
     val vertexShader = Shader.loadShaderFromFile(GL_VERTEX_SHADER, "src/main/resources/default.vert")
-    vertexShader.init()
-    val fragmentShader = Shader.loadShaderFromFile(GL_FRAGMENT_SHADER, "src/main/resources/default.frag")
-    fragmentShader.init()
+    val vertexShaderCompiledSuccessfully = vertexShader.init()
+    if (!vertexShaderCompiledSuccessfully) {
+      println(s"Vertex shader did not compile correctly!")
+    }
 
-    val shaderProgram = ShaderProgram()
-    shaderProgram.attachShader(vertexShader)
-    shaderProgram.attachShader(fragmentShader)
+    val fragmentShader = Shader.loadShaderFromFile(GL_FRAGMENT_SHADER, "src/main/resources/default.frag")
+    val fragmentShaderCompiledSuccessfully = fragmentShader.init()
+    if (!fragmentShaderCompiledSuccessfully) {
+      println(s"Fragment shader did not compile correctly!")
+    }
+
+    val shaderProgram = ShaderProgram(List(vertexShader, fragmentShader))
+    shaderProgram.attachShaders()
     shaderProgram.bindFragDataLocation(0, "fragColor")
     shaderProgram.link()
     shaderProgram.use()
@@ -94,7 +93,7 @@ object Renderer {
     val projection = Matrix4.orthographic(-ratio, ratio, -1f, 1f, -1f, 1f)
     shaderProgram.setUniformMatrix4(uniformProjectionLocation, projection)
 
-    Renderer(shaderProgram, vertexShader, fragmentShader, vertexArrayObject, List(vertexBufferObject, elementBufferObject), List(modelVertices, elementVertices), triangleUniformModel)
+    Renderer(shaderProgram, vertexArrayObject, List(vertexBufferObject, elementBufferObject), List(modelVertices, elementVertices), triangleUniformModel)
   }
 
   def render(frameRates: FrameRates, fixedTimeStep: FixedTimeStep, renderer: Renderer): FrameRates = {
@@ -103,7 +102,7 @@ object Renderer {
     renderer.uniformModel match {
       case TriangleUniformModel(id, previousAngle, angle) =>
         val triangleLerpAngle = (1f - fixedTimeStep.alpha) * previousAngle + fixedTimeStep.alpha * angle
-        val rotateModel = Matrix4.rotate(triangleLerpAngle, 0f, 0f, 0.25f)
+        val rotateModel = Matrix4.rotate(triangleLerpAngle, 0f, 0.25f, 0.25f)
         renderer.shaderProgram.setUniformMatrix4(id, rotateModel)
     }
 
@@ -115,14 +114,12 @@ object Renderer {
   }
 
   private[this] def specifyVertexAttributes(shaderProgram: ShaderProgram): Unit = {
-    val floatSize = 4
-
     val positionAttribute = shaderProgram.getAttributeLocation("position")
     glEnableVertexAttribArray(positionAttribute)
-    glVertexAttribPointer(positionAttribute, 3, GL_FLOAT, false, 6 * floatSize, 0)
+    glVertexAttribPointer(positionAttribute, 3, GL_FLOAT, false, 7 * FloatSize, 0)
 
     val colorAttribute = shaderProgram.getAttributeLocation("color")
     glEnableVertexAttribArray(colorAttribute)
-    glVertexAttribPointer(colorAttribute, 3, GL_FLOAT, false, 6 * floatSize, 3 * floatSize)
+    glVertexAttribPointer(colorAttribute, 4, GL_FLOAT, false, 7 * FloatSize, 3 * FloatSize)
   }
 }

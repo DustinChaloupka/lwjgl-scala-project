@@ -6,16 +6,16 @@ import org.lwjgl.opengl.GL11.GL_TRUE
 case class Shader(shaderType: Int, source: CharSequence) {
   val id = glCreateShader(shaderType)
 
+  lazy val compiledSuccessfully = {
+    val status = glGetShaderi(id, GL_COMPILE_STATUS)
+    status == GL_TRUE
+  }
+  
   def init(): Boolean = {
     glShaderSource(id, source)
     glCompileShader(id)
 
     compiledSuccessfully
-  }
-
-  lazy val compiledSuccessfully = {
-    val status = glGetShaderi(id, GL_COMPILE_STATUS)
-    status == GL_TRUE
   }
 
   def getShaderLog(): String = {

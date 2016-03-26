@@ -2,9 +2,9 @@ package org.chaloupka.lwjgl
 import org.lwjgl.opengl.GL20._
 import org.lwjgl.opengl.GL30.glBindFragDataLocation
 
-case class ShaderProgram(id: Int = glCreateProgram()) {
-  def attachShader(shader: Shader): Unit = {
-    glAttachShader(id, shader.id)
+case class ShaderProgram(shaders: List[Shader], id: Int = glCreateProgram()) {
+  def attachShaders(): Unit = {
+    shaders.foreach(shader => glAttachShader(id, shader.id))
   }
 
   def bindFragDataLocation(number: Int, name: String): Unit = {
@@ -35,8 +35,12 @@ case class ShaderProgram(id: Int = glCreateProgram()) {
     glUseProgram(id)
   }
 
-  def delete(shaders: Shader*): Unit = {
-    shaders.foreach(shader => glDetachShader(id, shader.id))
+  def delete(): Unit = {
+    shaders.foreach { shader =>
+      glDetachShader(id, shader.id)
+      shader.delete()
+    }
+
     glDeleteProgram(id)
   }
 }
