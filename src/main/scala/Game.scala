@@ -32,9 +32,9 @@ object Game extends GameLoop {
 
   def dispose(window: Window, renderer: Renderer): Unit = {
     renderer.dispose()
-    window.dispose()
     keyCallback.release()
     errorCallback.release()
+    window.dispose()
     glfwTerminate()
   }
 }

@@ -1,5 +1,5 @@
 package org.chaloupka.lwjgl
-import java.nio.FloatBuffer
+import java.nio.Buffer
 import org.lwjgl.opengl.GL15._
 import org.lwjgl.opengl.GL11._
 import org.lwjgl.opengl.GL20._
@@ -9,15 +9,15 @@ case class Renderer(shaderProgram: ShaderProgram,
                     vertexShader: Shader,
                     fragmentShader: Shader,
                     vertexArrayObject: VertexArrayObject,
-                    vertexBufferObject: VertexBufferObject,
-                    vertices: FloatBuffer,
+                    bufferObjects: List[BufferObject],
+                    vertices: List[Buffer],
                     uniformModel: UniformModel) {
   def dispose(): Unit = {
-    shaderProgram.delete()
+    shaderProgram.delete(vertexShader, fragmentShader)
     vertexShader.delete()
     fragmentShader.delete()
     vertexArrayObject.delete()
-    vertexBufferObject.delete()
+    bufferObjects.foreach(_.delete())
   }
 
   def updateUniformModel(uniformModel: UniformModel): Renderer = {
@@ -31,15 +31,40 @@ object Renderer {
     vertexArrayObject.bind()
 
     val vertexBufferObject = new VertexBufferObject()
-    vertexBufferObject.bind(GL_ARRAY_BUFFER)
+    vertexBufferObject.bind()
 
-    val vertices = BufferUtils.createFloatBuffer(3 * 6)
-    vertices.put(0f).put(0.5f).put(0f).put(0f).put(0f).put(0f)
-    vertices.put(0.5f).put(0f).put(0f).put(0f).put(0.2f).put(0f)
-    vertices.put(0f).put(-0.5f).put(0f).put(0f).put(0f).put(0f)
-    vertices.flip()
+    val modelVertices = BufferUtils.createFloatBuffer(8 * 6)
+    modelVertices.put(-0.5f).put(0.5f).put(0f).put(1f).put(0f).put(0f)
+    modelVertices.put(0.5f).put(0.5f).put(0f).put(0f).put(1f).put(0f)
+    modelVertices.put(0.5f).put(-0.5f).put(0f).put(0f).put(0f).put(1f)
+    modelVertices.put(-0.5f).put(-0.5f).put(0f).put(0.5f).put(0.5f).put(0f)
+    modelVertices.put(-0.5f).put(0.5f).put(-0.5f).put(0f).put(0.5f).put(0.5f)
+    modelVertices.put(0.5f).put(0.5f).put(-0.5f).put(0.25f).put(0.25f).put(0.25f)
+    modelVertices.put(0.5f).put(-0.5f).put(-0.5f).put(0.5f).put(0f).put(0.5f)
+    modelVertices.put(-0.5f).put(-0.5f).put(-0.5f).put(0.75f).put(0.75f).put(0.75f)
+    modelVertices.flip()
 
-    vertexBufferObject.uploadData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW)
+    vertexBufferObject.uploadData(modelVertices, GL_STATIC_DRAW)
+
+    val elementBufferObject = new ElementBufferObject()
+    elementBufferObject.bind()
+
+    val elementVertices = BufferUtils.createIntBuffer(12 * 3)
+    elementVertices.put(0).put(1).put(2)
+    elementVertices.put(2).put(3).put(0)
+    elementVertices.put(0).put(4).put(1)
+    elementVertices.put(1).put(4).put(5)
+    elementVertices.put(5).put(1).put(2)
+    elementVertices.put(2).put(6).put(5)
+    elementVertices.put(5).put(6).put(4)
+    elementVertices.put(4).put(6).put(7)
+    elementVertices.put(7).put(6).put(2)
+    elementVertices.put(2).put(3).put(7)
+    elementVertices.put(7).put(4).put(0)
+    elementVertices.put(0).put(3).put(7)
+    elementVertices.flip()
+
+    elementBufferObject.uploadData(elementVertices, GL_STATIC_DRAW)
 
     val vertexShader = Shader.loadShaderFromFile(GL_VERTEX_SHADER, "src/main/resources/default.vert")
     vertexShader.init()
@@ -69,7 +94,7 @@ object Renderer {
     val projection = Matrix4.orthographic(-ratio, ratio, -1f, 1f, -1f, 1f)
     shaderProgram.setUniformMatrix4(uniformProjectionLocation, projection)
 
-    Renderer(shaderProgram, vertexShader, fragmentShader, vertexArrayObject, vertexBufferObject, vertices, triangleUniformModel)
+    Renderer(shaderProgram, vertexShader, fragmentShader, vertexArrayObject, List(vertexBufferObject, elementBufferObject), List(modelVertices, elementVertices), triangleUniformModel)
   }
 
   def render(frameRates: FrameRates, fixedTimeStep: FixedTimeStep, renderer: Renderer): FrameRates = {
@@ -78,11 +103,11 @@ object Renderer {
     renderer.uniformModel match {
       case TriangleUniformModel(id, previousAngle, angle) =>
         val triangleLerpAngle = (1f - fixedTimeStep.alpha) * previousAngle + fixedTimeStep.alpha * angle
-        val rotateModel = Matrix4.rotate(triangleLerpAngle, 0f, 0f, 1f)
+        val rotateModel = Matrix4.rotate(triangleLerpAngle, 0f, 0f, 0.25f)
         renderer.shaderProgram.setUniformMatrix4(id, rotateModel)
     }
 
-    glDrawArrays(GL_TRIANGLES, 0, 3)
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0)
 
     // Last thing probably
     val updatedFrameRates = frameRates.incrementFPSCount()

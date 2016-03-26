@@ -2,3 +2,4 @@ target
 project/target
 project/project
 .idea
+hs_err_pid*
