@@ -25,3 +25,7 @@ trait BufferObject {
     glBindBuffer(bufferType, id)
   }
 }
+
+object BufferObject {
+  lazy val AttributeSize = 7
+}

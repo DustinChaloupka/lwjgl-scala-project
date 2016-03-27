@@ -2,6 +2,7 @@ package org.chaloupka.lwjgl
 import java.nio.FloatBuffer
 import org.lwjgl.BufferUtils
 
+// todo - switch from vector to a row/column model
 case class Matrix4(row1: Vector4, row2: Vector4, row3: Vector4, row4: Vector4) {
   lazy val column1 = Vector4(row1.x, row2.x, row3.x, row4.x)
   lazy val column2 = Vector4(row1.y, row2.y, row3.y, row4.y)

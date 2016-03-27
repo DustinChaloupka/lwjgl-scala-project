@@ -14,8 +14,8 @@ object Updater {
   }
 
   def update(frameRates: FrameRates, timer: Timer, renderer: Renderer): (FrameRates, Renderer) = {
-    val updatedUniformModel = renderer.uniformModel.updateAngles(timer.delta)
-    val updatedRenderer = renderer.updateUniformModel(updatedUniformModel)
+    val updatedModel = renderer.model.updateAngles(timer.delta)
+    val updatedRenderer = renderer.updateModel(updatedModel)
 
     // Last thing probably
     val updatedFrameRates = frameRates.incrementUPSCount()

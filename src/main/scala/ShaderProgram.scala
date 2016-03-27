@@ -1,8 +1,10 @@
 package org.chaloupka.lwjgl
+import org.chaloupka.lwjgl.PrimitiveUtils.FloatSize
 import org.lwjgl.opengl.GL20._
+import org.lwjgl.opengl.GL11._
 import org.lwjgl.opengl.GL30.glBindFragDataLocation
 
-case class ShaderProgram(shaders: List[Shader], id: Int = glCreateProgram()) {
+case class ShaderProgram(shaders: List[Shader], vertexArrayObject: VertexArrayObject, id: Int = glCreateProgram()) {
   def attachShaders(): Unit = {
     shaders.foreach(shader => glAttachShader(id, shader.id))
   }
@@ -36,11 +38,24 @@ case class ShaderProgram(shaders: List[Shader], id: Int = glCreateProgram()) {
   }
 
   def delete(): Unit = {
+    vertexArrayObject.delete()
     shaders.foreach { shader =>
       glDetachShader(id, shader.id)
       shader.delete()
     }
 
     glDeleteProgram(id)
+  }
+
+  private[this] val maxPositionAttributes = 3
+  private[this] val maxColorAttributes = 4
+  def specifyVertexAttributes(): Unit = {
+    val positionAttribute = getAttributeLocation("position")
+    glEnableVertexAttribArray(positionAttribute)
+    glVertexAttribPointer(positionAttribute, maxPositionAttributes, GL_FLOAT, false, (maxPositionAttributes + maxColorAttributes) * FloatSize, 0)
+
+    val colorAttribute = getAttributeLocation("color")
+    glEnableVertexAttribArray(colorAttribute)
+    glVertexAttribPointer(colorAttribute, maxColorAttributes, GL_FLOAT, false, (maxPositionAttributes + maxColorAttributes) * FloatSize, maxPositionAttributes * FloatSize)
   }
 }
