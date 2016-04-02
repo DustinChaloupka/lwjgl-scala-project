@@ -38,8 +38,8 @@ trait SingleColorModel extends Model {
     vertices.foreach { vertex =>
       modelBuffer.put(vertex.x).put(vertex.y).put(vertex.z)
 
-      val (red, blue, green, alpha) = color.floatValues
-      modelBuffer.put(red).put(blue).put(green).put(alpha)
+      val (red, green, blue, alpha) = color.floatValues
+      modelBuffer.put(red).put(green).put(blue).put(alpha)
     }
 
     modelBuffer.flip()
