@@ -20,6 +20,7 @@ object Renderer {
     shaderProgram.use()
 
     val uniformModelLocation = shaderProgram.getUniformLocation("model")
+    // val cubeModel = MultiColoredCubeModel(uniformModelLocation)
     val xAxisModel = XAxisHexahedronModel(uniformModelLocation)
     // val yAxisModel = YAxisHexahedronModel(uniformModelLocation)
     // val zAxisModel = ZAxisHexahedronModel(uniformModelLocation)
@@ -28,14 +29,15 @@ object Renderer {
     shaderProgram.setUniformMatrix4(uniformModelLocation, model)
 
     val uniformViewLocation = shaderProgram.getUniformLocation("view")
-    val view = Matrix4.identity()
+    val view = Matrix4.lookAtView(Vector3(1.2f, 1.2f, 1.2f), Vector3(0f, 0f, 0f), Vector3(0f, 0f, 1f))
     shaderProgram.setUniformMatrix4(uniformViewLocation, view)
 
     val uniformProjectionLocation = shaderProgram.getUniformLocation("projection")
     val ratio = 640f / 480f
-    val projection = Matrix4.orthographic(-ratio, ratio, -1f, 1f, -1f, 1f)
+    val projection = Matrix4.perspective(45f, ratio, 1f, -1f)
     shaderProgram.setUniformMatrix4(uniformProjectionLocation, projection)
 
+    // cubeModel.uploadModelData()
     xAxisModel.uploadModelData()
     // yAxisModel.uploadModelData()
     // zAxisModel.uploadModelData()
@@ -51,7 +53,7 @@ object Renderer {
 
     renderer.models.map { model =>
       val lerpAngle = model.getLerpAngle(fixedTimeStep.alpha)
-      val rotationMatrix = Matrix4.rotation(lerpAngle, 0f, 1f, 0f)
+      val rotationMatrix = Matrix4.rotating(lerpAngle, 0f, 0f, 1f)
       renderer.shaderProgram.setUniformMatrix4(model.id, rotationMatrix)
       model.draw()
     }

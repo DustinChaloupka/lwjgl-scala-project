@@ -57,6 +57,13 @@ case class Vector3(x: Float, y: Float, z: Float) {
     x * that.x + y * that.y + z * that.z
   }
 
+  def cross(that: Vector3): Vector3 = {
+    val newX = y * that.z - z * that.y
+    val newY = z * that.x - x * that.z
+    val newZ = x * that.y - y * that.x
+    Vector3(newX, newY, newZ)
+  }
+
   def lerp(that: Vector3, alpha: Float): Vector3 = {
     this.scale(1f - alpha).add(that.scale(alpha))
   }

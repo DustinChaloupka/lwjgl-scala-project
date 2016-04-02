@@ -146,7 +146,7 @@ trait HexahedronModel extends Model {
 
 case class XAxisHexahedronModel(id: Int) extends ColoredModel with HexahedronModel {
   lazy val color = Palette.Red(255)
-  lazy val verticesWithColors = List((Coordinates.XYZ(0.5f, 0.1f, 0.1f), color),
+  lazy val verticesWithColors = List((Coordinates.XYZ(0.5f, 0.1f, 0.1f), Palette.White()),
                                      (Coordinates.XYZ(-0.5f, 0.1f, 0.1f), color),
                                      (Coordinates.XYZ(0.5f, -0.1f, 0.1f), color),
                                      (Coordinates.XYZ(0.5f, 0.1f, -0.1f), color),

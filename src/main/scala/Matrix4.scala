@@ -116,6 +116,27 @@ object Matrix4 {
             Vector4(0f, 0f, 0f, 1f))
   }
 
+  def lookAtView(camera: Vector3, centerPoint: Vector3, upAxis: Vector3): Matrix4 = {
+    val newUp = camera - centerPoint
+    val normalizedNewUp = newUp.normalize()
+
+    val newPerpendicularAxis = upAxis cross normalizedNewUp
+    val newParallelAxis = normalizedNewUp cross newPerpendicularAxis
+
+    val normalizedPerpendicularAxis = newPerpendicularAxis.normalize()
+    val normalizedParallelAxis = newParallelAxis.normalize()
+
+    // not sure of good descriptions for tx, ty, tz
+    val tx = -(normalizedPerpendicularAxis dot camera)
+    val ty = -(normalizedParallelAxis dot camera)
+    val tz = -(normalizedNewUp dot camera)
+
+    Matrix4(Vector4(normalizedPerpendicularAxis.x, normalizedPerpendicularAxis.y, normalizedPerpendicularAxis.z, tx),
+            Vector4(normalizedParallelAxis.x, normalizedParallelAxis.y, normalizedParallelAxis.z, ty),
+            Vector4(normalizedNewUp.x, normalizedNewUp.y, normalizedNewUp.z, tz),
+            Vector4(0f, 0f, 0f, 1f))
+  }
+
   def orthographic(left: Float, right: Float, bottom: Float, top: Float, near: Float, far: Float): Matrix4 = {
     val tx = -(right + left) / (right - left)
     val ty = -(top + bottom) / (top - bottom)
@@ -146,20 +167,20 @@ object Matrix4 {
             Vector4(0f, 0f, -1f, 0f))
   }
 
-  def perspective(fovy: Float, aspect: Float, near: Float, far: Float): Matrix4 = {
-    val f = (1f / Math.tan(Math.toRadians(fovy) / 2f)).toFloat
+  def perspective(fieldOfViewAngle: Float, aspectRatio: Float, nearClippingPlane: Float, farClippingPlane: Float): Matrix4 = {
+    val fieldOfView = (1f / Math.tan(Math.toRadians(fieldOfViewAngle) / 2f)).toFloat
 
-    val newRow1X = f / aspect
-    val newRow3Z = (far + near) / (near - far)
-    val newRow3W = (2f * far * near)/ (near - far)
+    val newRow1X = fieldOfView / aspectRatio
+    val newRow3Z = (farClippingPlane + nearClippingPlane) / (nearClippingPlane - farClippingPlane)
+    val newRow3W = (2f * farClippingPlane * nearClippingPlane) / (nearClippingPlane - farClippingPlane)
 
     Matrix4(Vector4(newRow1X, 0f, 0f, 0f),
-            Vector4(0f, f, 0f, 0f),
+            Vector4(0f, fieldOfView, 0f, 0f),
             Vector4(0f, 0f, newRow3Z, newRow3W),
             Vector4(0f, 0f, -1f, 0f))
   }
 
-  def translation(x: Float, y: Float, z: Float): Matrix4 = {
+  def translating(x: Float, y: Float, z: Float): Matrix4 = {
     Matrix4(Vector4(1f, 0f, 0f, x),
             Vector4(0f, 1f, 0f, y),
             Vector4(0f, 0f, 1f, z),
@@ -167,7 +188,7 @@ object Matrix4 {
   }
 
   // split into separate types of rotations?
-  def rotation(angle: Float, x: Float, y: Float, z: Float): Matrix4 = {
+  def rotating(angle: Float, x: Float, y: Float, z: Float): Matrix4 = {
     val angleCos = Math.cos(Math.toRadians(angle)).toFloat
     val angleSin = Math.sin(Math.toRadians(angle)).toFloat
 
