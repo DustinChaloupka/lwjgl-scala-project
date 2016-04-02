@@ -14,11 +14,10 @@ object Updater {
   }
 
   def update(frameRates: FrameRates, timer: Timer, renderer: Renderer): (FrameRates, Renderer) = {
-    val updatedModel = renderer.model.updateAngles(timer.delta)
-    val updatedRenderer = renderer.updateModel(updatedModel)
+    renderer.models.foreach(_.updateAngles(timer.delta))
 
     // Last thing probably
     val updatedFrameRates = frameRates.incrementUPSCount()
-    (updatedFrameRates, updatedRenderer)
+    (updatedFrameRates, renderer)
   }
 }

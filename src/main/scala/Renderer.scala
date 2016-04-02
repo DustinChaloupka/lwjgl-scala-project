@@ -6,14 +6,10 @@ import org.lwjgl.opengl.GL20._
 import org.lwjgl.BufferUtils
 
 case class Renderer(shaderProgram: ShaderProgram,
-                    model: Model) {
+                    models: List[Model]) {
   def dispose(): Unit = {
     shaderProgram.delete()
-    model.delete()
-  }
-
-  def updateModel(model: Model): Renderer = {
-    this.copy(model = model)
+    models.foreach(_.delete())
   }
 }
 
@@ -24,7 +20,9 @@ object Renderer {
     shaderProgram.use()
 
     val uniformModelLocation = shaderProgram.getUniformLocation("model")
-    val cubeModel = MultiColoredCubeModel(uniformModelLocation)
+    val xAxisModel = XAxisHexahedronModel(uniformModelLocation)
+    // val yAxisModel = YAxisHexahedronModel(uniformModelLocation)
+    // val zAxisModel = ZAxisHexahedronModel(uniformModelLocation)
 
     val model = Matrix4.identity()
     shaderProgram.setUniformMatrix4(uniformModelLocation, model)
@@ -38,23 +36,24 @@ object Renderer {
     val projection = Matrix4.orthographic(-ratio, ratio, -1f, 1f, -1f, 1f)
     shaderProgram.setUniformMatrix4(uniformProjectionLocation, projection)
 
-    cubeModel.uploadModelData()
+    xAxisModel.uploadModelData()
+    // yAxisModel.uploadModelData()
+    // zAxisModel.uploadModelData()
 
     shaderProgram.bindFragDataLocation(0, "fragColor")
     shaderProgram.specifyVertexAttributes()
 
-    Renderer(shaderProgram, cubeModel)
+    Renderer(shaderProgram, List(xAxisModel))
   }
 
   def render(frameRates: FrameRates, fixedTimeStep: FixedTimeStep, renderer: Renderer): FrameRates = {
     glClear(GL_COLOR_BUFFER_BIT)
 
-    renderer.model match {
-      case model@MultiColoredCubeModel(id, previousAngle, angle) =>
-        val triangleLerpAngle = (1f - fixedTimeStep.alpha) * previousAngle + fixedTimeStep.alpha * angle
-        val rotateModel = Matrix4.rotate(triangleLerpAngle, 0f, 0.25f, 0.25f)
-        renderer.shaderProgram.setUniformMatrix4(id, rotateModel)
-        model.draw()
+    renderer.models.map { model =>
+      val lerpAngle = model.getLerpAngle(fixedTimeStep.alpha)
+      val rotationMatrix = Matrix4.rotation(lerpAngle, 0f, 1f, 0f)
+      renderer.shaderProgram.setUniformMatrix4(model.id, rotationMatrix)
+      model.draw()
     }
 
     // Last thing probably

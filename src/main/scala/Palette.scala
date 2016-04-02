@@ -60,9 +60,9 @@ object Palette {
     lazy val red = minColorValue
   }
 
-  case class BlueA(green: Int, alpha: Float) extends Color {
+  case class BlueA(blue: Int, alpha: Float) extends Color {
     lazy val red = minColorValue
-    lazy val blue = minColorValue
+    lazy val green = minColorValue
   }
 
   case class GreenA(green: Int, alpha: Float) extends Color {
@@ -95,9 +95,9 @@ object Palette {
     lazy val alpha = 1f
   }
 
-  case class Blue(green: Int) extends Color {
+  case class Blue(blue: Int) extends Color {
     lazy val red = minColorValue
-    lazy val blue = minColorValue
+    lazy val green = minColorValue
     lazy val alpha = 1f
   }
 

@@ -5,7 +5,6 @@ import org.lwjgl.opengl.GL11.glDrawElements
 
 sealed trait Model {
   def id: Int
-  def updateAngles(delta: Float): Model
   def vertexUsage: VertexUsage.Value
   def drawMode: DrawMode.Value
   def indexType: IndexType.Value
@@ -27,15 +26,27 @@ sealed trait Model {
     vertexBufferObject.delete()
     elementBufferObject.delete()
   }
+
+  private[this] var previousAngle: Float = 0f
+  private[this] var angle: Float = 0f
+  def anglesPerSecond: Float
+  def updateAngles(delta: Float): Unit = {
+    previousAngle = angle
+    angle = angle + delta * anglesPerSecond
+  }
+
+  def getLerpAngle(alpha: Float): Float = {
+    (1f - alpha) * previousAngle + alpha * angle
+  }
 }
 
-trait SingleColorModel extends Model {
-  def vertices: List[Coordinates.Position]
-  def color: Palette.Color
+trait ColoredModel extends Model {
+  def verticesWithColors: List[(Coordinates.Position, Palette.Color)]
+  lazy val vertices = verticesWithColors.map(_._1)
 
   lazy val vertexBufferValues = {
-    val modelBuffer = BufferUtils.createFloatBuffer(vertices.size * BufferObject.AttributeSize)
-    vertices.foreach { vertex =>
+    val modelBuffer = BufferUtils.createFloatBuffer(verticesWithColors.size * BufferObject.AttributeSize)
+    verticesWithColors.foreach { case (vertex, color) =>
       modelBuffer.put(vertex.x).put(vertex.y).put(vertex.z)
 
       val (red, green, blue, alpha) = color.floatValues
@@ -47,28 +58,7 @@ trait SingleColorModel extends Model {
   }
 }
 
-trait MultiColoredModel extends Model {
-  def vertices: List[Coordinates.Position]
-  def colors: List[Palette.Color]
-  def verticesWithColors: List[(Coordinates.Position, Palette.Color)] = {
-    vertices zip colors
-  }
-
-  lazy val vertexBufferValues = {
-    val modelBuffer = BufferUtils.createFloatBuffer(verticesWithColors.size * BufferObject.AttributeSize)
-    verticesWithColors.foreach { case (vertex, color) =>
-      modelBuffer.put(vertex.x).put(vertex.y).put(vertex.z)
-
-      val (red, blue, green, alpha) = color.floatValues
-      modelBuffer.put(red).put(blue).put(green).put(alpha)
-    }
-
-    modelBuffer.flip()
-    modelBuffer
-  }
-}
-
-trait CubeModel extends Model {
+trait HexahedronModel extends Model {
   def vertices: List[Coordinates.Position]
   lazy val drawMode = DrawMode.Triangles
   lazy val indexType = IndexType.UnsignedInt
@@ -123,6 +113,7 @@ trait CubeModel extends Model {
       acc ++ matchingIndices :+ index
     }
 
+
     firstSetOfTriangles ++ secondSetOfTriangles ++ thirdSetOfTriangles ++ lastSetOfTriangles
   }
 
@@ -153,49 +144,59 @@ trait CubeModel extends Model {
   }
 }
 
-case class SingleColorCubeModel(id: Int, previousAngle: Float= 0f, angle: Float = 0f) extends SingleColorModel with CubeModel {
-  lazy val center = Coordinates.XYZ(0f, 0f, 0f)
-  lazy val faceDistance = 0.25f
-  lazy val vertices = List(Coordinates.XYZ(faceDistance, faceDistance, faceDistance),
-                           Coordinates.XYZ(-faceDistance, faceDistance, faceDistance),
-                           Coordinates.XYZ(faceDistance, -faceDistance, faceDistance),
-                           Coordinates.XYZ(faceDistance, faceDistance, -faceDistance),
-                           Coordinates.XYZ(-faceDistance, -faceDistance, faceDistance),
-                           Coordinates.XYZ(-faceDistance, faceDistance, -faceDistance),
-                           Coordinates.XYZ(faceDistance, -faceDistance, -faceDistance),
-                           Coordinates.XYZ(-faceDistance, -faceDistance, -faceDistance))
-  lazy val color = Palette.White()
+case class XAxisHexahedronModel(id: Int) extends ColoredModel with HexahedronModel {
+  lazy val color = Palette.Red(255)
+  lazy val verticesWithColors = List((Coordinates.XYZ(0.5f, 0.1f, 0.1f), color),
+                                     (Coordinates.XYZ(-0.5f, 0.1f, 0.1f), color),
+                                     (Coordinates.XYZ(0.5f, -0.1f, 0.1f), color),
+                                     (Coordinates.XYZ(0.5f, 0.1f, -0.1f), color),
+                                     (Coordinates.XYZ(-0.5f, -0.1f, 0.1f), color),
+                                     (Coordinates.XYZ(-0.5f, 0.1f, -0.1f), color),
+                                     (Coordinates.XYZ(0.5f, -0.1f, -0.1f), color),
+                                     (Coordinates.XYZ(-0.5f, -0.1f, -0.1f), color))
   lazy val vertexUsage = VertexUsage.Static
-
-  lazy val anglePerSecond = 50f
-  def updateAngles(delta: Float): Model = {
-    this.copy(previousAngle = angle, angle = angle + delta * anglePerSecond)
-  }
+  lazy val anglesPerSecond = 50f
 }
 
-case class MultiColoredCubeModel(id: Int, previousAngle: Float= 0f, angle: Float = 0f) extends MultiColoredModel with CubeModel {
+case class YAxisHexahedronModel(id: Int) extends ColoredModel with HexahedronModel {
+  lazy val color = Palette.Green(255)
+  lazy val verticesWithColors = List((Coordinates.XYZ(0.1f, 0f, 0.1f), color),
+                                     (Coordinates.XYZ(-0.1f, 0f, 0.1f), color),
+                                     (Coordinates.XYZ(0.1f, -0.5f, 0.1f), color),
+                                     (Coordinates.XYZ(0.1f, 0f, -0.1f), color),
+                                     (Coordinates.XYZ(-0.1f, -0.5f, 0.1f), color),
+                                     (Coordinates.XYZ(-0.1f, 0f, -0.1f), color),
+                                     (Coordinates.XYZ(0.1f, -0.5f, -0.1f), color),
+                                     (Coordinates.XYZ(-0.1f, -0.5f, -0.1f), color))
+  lazy val vertexUsage = VertexUsage.Static
+  lazy val anglesPerSecond = 50f
+}
+
+case class ZAxisHexahedronModel(id: Int) extends ColoredModel with HexahedronModel {
+  lazy val color = Palette.Blue(255)
+  lazy val verticesWithColors = List((Coordinates.XYZ(0.1f, 0.1f, 0f), color),
+                                     (Coordinates.XYZ(-0.1f, 0.1f, 0f), color),
+                                     (Coordinates.XYZ(0.1f, -0.1f, 0f), color),
+                                     (Coordinates.XYZ(0.1f, 0.1f, -0.5f), color),
+                                     (Coordinates.XYZ(-0.1f, -0.1f, 0f), color),
+                                     (Coordinates.XYZ(-0.1f, 0.1f, -0.5f), color),
+                                     (Coordinates.XYZ(0.1f, -0.1f, -0.5f), color),
+                                     (Coordinates.XYZ(-0.1f, -0.1f, -0.5f), color))
+  lazy val vertexUsage = VertexUsage.Static
+  lazy val anglesPerSecond = 50f
+}
+
+case class MultiColoredCubeModel(id: Int) extends ColoredModel with HexahedronModel {
   lazy val center = Coordinates.XYZ(0f, 0f, 0f)
   lazy val faceDistance = 0.25f
-  lazy val vertices = List(Coordinates.XYZ(faceDistance, faceDistance, faceDistance),
-                           Coordinates.XYZ(-faceDistance, faceDistance, faceDistance),
-                           Coordinates.XYZ(faceDistance, -faceDistance, faceDistance),
-                           Coordinates.XYZ(faceDistance, faceDistance, -faceDistance),
-                           Coordinates.XYZ(-faceDistance, -faceDistance, faceDistance),
-                           Coordinates.XYZ(-faceDistance, faceDistance, -faceDistance),
-                           Coordinates.XYZ(faceDistance, -faceDistance, -faceDistance),
-                           Coordinates.XYZ(-faceDistance, -faceDistance, -faceDistance))
-  lazy val colors = List(Palette.Red(255),
-                         Palette.Green(255),
-                         Palette.Blue(255),
-                         Palette.RedBlue(255, 255),
-                         Palette.BlueGreen(255, 255),
-                         Palette.RedGreen(255, 255),
-                         Palette.RedBlueGreen(122, 122, 122),
-                         Palette.BlueGreen(100, 200))
+  lazy val verticesWithColors = List((Coordinates.XYZ(faceDistance, faceDistance, faceDistance), Palette.Red(255)),
+                                     (Coordinates.XYZ(-faceDistance, faceDistance, faceDistance), Palette.Red(255)),
+                                     (Coordinates.XYZ(faceDistance, -faceDistance, faceDistance), Palette.Red(255)),
+                                     (Coordinates.XYZ(faceDistance, faceDistance, -faceDistance), Palette.Blue(255)),
+                                     (Coordinates.XYZ(-faceDistance, -faceDistance, faceDistance), Palette.Red(255)),
+                                     (Coordinates.XYZ(-faceDistance, faceDistance, -faceDistance), Palette.Blue(255)),
+                                     (Coordinates.XYZ(faceDistance, -faceDistance, -faceDistance), Palette.Green(255)),
+                                     (Coordinates.XYZ(-faceDistance, -faceDistance, -faceDistance), Palette.Green(255)))
   lazy val vertexUsage = VertexUsage.Static
-
-  lazy val anglePerSecond = 50f
-  def updateAngles(delta: Float): Model = {
-    this.copy(previousAngle = angle, angle = angle + delta * anglePerSecond)
-  }
+  lazy val anglesPerSecond = 50f
 }

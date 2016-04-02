@@ -2,7 +2,6 @@ package org.chaloupka.lwjgl
 import java.nio.FloatBuffer
 import org.lwjgl.BufferUtils
 
-// todo - switch from vector to a row/column model
 case class Matrix4(row1: Vector4, row2: Vector4, row3: Vector4, row4: Vector4) {
   lazy val column1 = Vector4(row1.x, row2.x, row3.x, row4.x)
   lazy val column2 = Vector4(row1.y, row2.y, row3.y, row4.y)
@@ -160,29 +159,30 @@ object Matrix4 {
             Vector4(0f, 0f, -1f, 0f))
   }
 
-  def translate(x: Float, y: Float, z: Float): Matrix4 = {
+  def translation(x: Float, y: Float, z: Float): Matrix4 = {
     Matrix4(Vector4(1f, 0f, 0f, x),
             Vector4(0f, 1f, 0f, y),
             Vector4(0f, 0f, 1f, z),
             Vector4(0f, 0f, 0f, 1f))
   }
 
-  def rotate(angle: Float, x: Float, y: Float, z: Float): Matrix4 = {
-    val c = Math.cos(Math.toRadians(angle)).toFloat
-    val s = Math.sin(Math.toRadians(angle)).toFloat
+  // split into separate types of rotations?
+  def rotation(angle: Float, x: Float, y: Float, z: Float): Matrix4 = {
+    val angleCos = Math.cos(Math.toRadians(angle)).toFloat
+    val angleSin = Math.sin(Math.toRadians(angle)).toFloat
 
     def createRotationMatrix(newX: Float, newY: Float, newZ: Float): Matrix4 = {
-      val newRow1X = x * x * (1f - c) + c
-      val newRow1Y = x * y * (1f - c) - z * s
-      val newRow1Z = x * z * (1f - c) + y * s
+      val newRow1X = x * x * (1f - angleCos) + angleCos
+      val newRow1Y = x * y * (1f - angleCos) - z * angleSin
+      val newRow1Z = x * z * (1f - angleCos) + y * angleSin
 
-      val newRow2X = y * x * (1f - c) + z * s
-      val newRow2Y = y * y * (1f - c) + c
-      val newRow2Z = y * z * (1f - c) - x * s
+      val newRow2X = y * x * (1f - angleCos) + z * angleSin
+      val newRow2Y = y * y * (1f - angleCos) + angleCos
+      val newRow2Z = y * z * (1f - angleCos) - x * angleSin
 
-      val newRow3X = x * z * (1f - c) - y * s
-      val newRow3Y = y * z * (1f - c) + x * s
-      val newRow3Z = z * z * (1f - c) + c
+      val newRow3X = x * z * (1f - angleCos) - y * angleSin
+      val newRow3Y = y * z * (1f - angleCos) + x * angleSin
+      val newRow3Z = z * z * (1f - angleCos) + angleCos
 
       Matrix4(Vector4(newRow1X, newRow1Y, newRow1Z, 0f),
               Vector4(newRow2X, newRow2Y, newRow2Z, 0f),
@@ -200,7 +200,7 @@ object Matrix4 {
     }
   }
 
-  def scale(x: Float, y: Float, z: Float): Matrix4 = {
+  def scaling(x: Float, y: Float, z: Float): Matrix4 = {
     Matrix4(Vector4(x, 0f, 0f, 0f),
             Vector4(0f, y, 0f, 0f),
             Vector4(0f, 0f, z, 0f),
