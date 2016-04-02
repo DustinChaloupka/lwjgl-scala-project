@@ -3,4 +3,4 @@ project/target
 project/project
 .idea
 hs_err_pid*
-.launch4j-config.xml
+launch4j-config.xml

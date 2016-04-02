@@ -5,7 +5,7 @@ import org.lwjgl.opengl.GL11.GL_TRUE
 
 trait Shader {
   def shaderType: Int
-  def source: CharSequence
+  def source: String
   lazy val id = glCreateShader(shaderType)
 
   lazy val compiledSuccessfully = {
@@ -16,6 +16,10 @@ trait Shader {
   def init(): Boolean = {
     glShaderSource(id, source)
     glCompileShader(id)
+
+    if (!compiledSuccessfully) {
+      println(s"${this.getClass.getSimpleName} did not compile correctly!")
+    }
 
     compiledSuccessfully
   }

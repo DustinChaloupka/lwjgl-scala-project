@@ -4,7 +4,19 @@ import org.lwjgl.opengl.GL20._
 import org.lwjgl.opengl.GL11._
 import org.lwjgl.opengl.GL30.glBindFragDataLocation
 
-case class ShaderProgram(shaders: List[Shader], vertexArrayObject: VertexArrayObject, id: Int = glCreateProgram()) {
+trait ShaderProgram {
+  def shaders: List[Shader]
+  def vertexArrayObject: VertexArrayObject
+
+  lazy val id = glCreateProgram()
+
+  def init(): Unit = {
+    vertexArrayObject.bind()
+    shaders.foreach(_.init())
+    attachShaders()
+    link()
+  }
+
   def attachShaders(): Unit = {
     shaders.foreach(shader => glAttachShader(id, shader.id))
   }

@@ -19,24 +19,8 @@ case class Renderer(shaderProgram: ShaderProgram,
 
 object Renderer {
   def initializeRenderer(): Renderer = {
-    val vertexArrayObject = new VertexArrayObject()
-    vertexArrayObject.bind()
-
-    val vertexShader = new VertexShader()
-    val vertexShaderCompiledSuccessfully = vertexShader.init()
-    if (!vertexShaderCompiledSuccessfully) {
-      println(s"Vertex shader did not compile correctly!")
-    }
-
-    val fragmentShader = new FragmentShader()
-    val fragmentShaderCompiledSuccessfully = fragmentShader.init()
-    if (!fragmentShaderCompiledSuccessfully) {
-      println(s"Fragment shader did not compile correctly!")
-    }
-
-    val shaderProgram = ShaderProgram(List(vertexShader, fragmentShader), vertexArrayObject)
-    shaderProgram.attachShaders()
-    shaderProgram.link()
+    val shaderProgram = new DefaultShaderProgram()
+    shaderProgram.init()
     shaderProgram.use()
 
     val uniformModelLocation = shaderProgram.getUniformLocation("model")
@@ -66,13 +50,12 @@ object Renderer {
     glClear(GL_COLOR_BUFFER_BIT)
 
     renderer.model match {
-      case MultiColoredCubeModel(id, previousAngle, angle) =>
+      case model@MultiColoredCubeModel(id, previousAngle, angle) =>
         val triangleLerpAngle = (1f - fixedTimeStep.alpha) * previousAngle + fixedTimeStep.alpha * angle
         val rotateModel = Matrix4.rotate(triangleLerpAngle, 0f, 0.25f, 0.25f)
         renderer.shaderProgram.setUniformMatrix4(id, rotateModel)
+        model.draw()
     }
-
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0)
 
     // Last thing probably
     val updatedFrameRates = frameRates.incrementFPSCount()
