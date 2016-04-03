@@ -15,6 +15,8 @@ case class Renderer(shaderProgram: ShaderProgram,
 
 object Renderer {
   def initializeRenderer(): Renderer = {
+    glEnable(GL_DEPTH_TEST)
+
     val shaderProgram = new DefaultShaderProgram()
     shaderProgram.init()
     shaderProgram.use()
@@ -49,7 +51,7 @@ object Renderer {
   }
 
   def render(frameRates: FrameRates, fixedTimeStep: FixedTimeStep, renderer: Renderer): FrameRates = {
-    glClear(GL_COLOR_BUFFER_BIT)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     renderer.models.map { model =>
       val lerpAngle = model.getLerpAngle(fixedTimeStep.alpha)
